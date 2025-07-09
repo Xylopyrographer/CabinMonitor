@@ -1,0 +1,10 @@
+Issues
+- Not been able to locate a supplier for the IoT SIM card needed for the SIMCOMM SIM7000G cell modem. Canada, eh. Been developing with another product & using a pay-as-you go SIM card. but it does not use the same band as the SIM7000G.
+- Where to upload the picture files? Google seems to have changed their API to make this much more difficult. Keep trying to punch through with that solution or spin up a server hosted by someone in teh family or find another cheap/free hosting service? Intent is to make the pics available to everyone easily via a mobile device or computer.
+- Power supply. the IP board takes 12V, everything else takes 5V. Also the battery backup and some kind of heater for the winter months. Was thinking a low wattage incandescent bulb would do the trick. Need to design all this.
+-Housing. 3D printers area thing. need to figure out how to design the package for the works.
+- http coms. The SIM7000G does not natively support https communication. If the server we upload pics to requires secure a connection, can we implement using an ESP32-S3 compatible library over TCP/IP and/or UDP?
+- Check the Lilygo repository for the SIMCOM datasheets for the SIM module:
+https://github.com/Xinyuan-LilyGO/LilyGo-T-PCIE
+- Lilygo repository for T-SIMCAM main board (click the T-SIMCAM link in the table):
+https://github.com/Xinyuan-LilyGO/LilyGo-Camera-Series?tab=readme-ov-file
