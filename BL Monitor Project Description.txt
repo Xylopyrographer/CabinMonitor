@@ -1,0 +1,43 @@
+I'm using PlatformIO with the Arduino-esp32 framework to code a project based on an ESP32-S3. The board has the following devices: an OV5640 camera; an IR cut module attached to the camera sensor; an SD card module; as I2S MEMS microphone; a PIR sensor; an IR LED array module; a photo resistor to measure ambient light level; a single WS2812 RGB LED; a SIMCOM SIM7000G cellular modem; a momentary contact push button switch connected to a GPIO pin; 16MB flash memory; 2MB PSRAM memory.
+
+The project is a monitoring device that should do the following: continually monitor the output of the PIR sensor and the MEMS microphone. If the PIR sensor detects motion or if the microphone detects a loud sound, the ESP32-S3 should: measure the ambient light level; turn the IR LED module on or off dependant on a settable ambient light intensity threshold; enable or disable the IR cut module of the camera based on the same ambient light level; and then start to capture pictures from the camera and save them to the SD card as JPG files. The files should be named with a "base name" appended with its system date and time. After a configurable time, if no more activity is detected by the microphone or the PIR sensor, the ESP32-S3 should stop taking pictures and then use the cellular modem to upload the JPG files to a Google Drive folder. After the file is confirmed to have been uploaded successfully, the ESP32-S3 should delete that file from the SD card. If the ESP32-S3 determines on power up or reset that there are files on the SD card that have not been sent, it should use the cellular modem to upload those files to the Google Drive before starting to monitor the PIR sensor and microphone. The ESP32-S3 should check the amount of available space on the SD card before saving a file and if there is insufficient spece, delete the oldest file on the SD card until there is room.
+
+Before uploading files to the Google Drive, the ESP32-S3 should use the cellular modem to send an SMS "activity detected" text message to a provisioned telephone number.  
+
+Should either the PIR sensor or microphone detect activity while files are being uploaded, the upload process should stop and the camera once again start taking pictures and store them on the SD card. Once the timeout period of no activity has been met, the upload process should resume.
+
+Once a day the ESP32-S3 should use the cellular modem to update and synchronize its system time with an NTP server.
+
+Once a day the ESP32-S3 should use the cellular modem to ensure it can communicate with the Google Drive. If it cannot, the ESP32-S3 should use the cellular modem to send a "no communication to Google Drive" SMS text message to a provisioned telephone number. Once communication with the Google Drive is successful, the ESP32-S3 should use the cellular modem to send a "communication to Google Drive OK" SMS text message to a provisioned telephone number. Uploading of files to the Google Drive should only be done if the ESP32-S3 can communicate with the Google Drive.
+
+Once a week, if there has been no activity triggered by the PIR sensor or microphone, the ESP32-S3 should take a picture and use the cellular modem to upload it to the Google Drive. Prior to uploading this file, the ESP32-S3 should use the cellular modem to send a "no activity detected" SMS text message to a provisioned telephone number.
+
+By using either the WiFi or BLE capabilities of a mobile device, the ESP32-S3 should be able to be provisioned via either its onboard WiFi or BLE for: the Google drive credentials; setting the ambient light threshold; setting the level of the sound used to trigger picture capture by the MEMs microphone; entering a minimum of 2 and maximum of 4 characters for the the "base name" of the JPG files; entering the telephone number to send all SMS messages to; entering the text of the "activity detected" SMS message; entering the text of the "no activity detected" SMS message; entering the text of the "no communication to Google Drive" SMS message; entering the text of the "communication to Google Drive OK" SMS message; entering the text of the "monitoring disabled" SMS message and; entering the text of the "monitoring enabled" SMS message. The SMS text messages should be a minimum of 3 ASCII characters and a maximum of 80 ASCII characters. The telephone number should allow a maximum of 13 ASCII numerical digits. All SMS text messages should be sent to this telephone number.
+
+On power up or restart, the ESP32-S3 should determine if it has ever been provisioned by checking against a value stored in its NVS memory partition. If it has not previously been partitioned, it should enter a state where it waits for provisioning. Once received, the provisioning information should be stored in the NVS of the ESP32-S3. If the ESP32-S3 has previously been provisioned, the ESP32-S3 should load the stored credentials from the NVS partition into memory and continue it's normal startup sequence.
+
+The firmware on ESP32-S3 should be upgradable via an OTA method from a mobile device using either the WiFi or BLE capabilities of the ESP32-S3 and the mobile device.
+
+The button connected to the ESP32-S3 should be used to place the ESP32-S3 into various states depending on how long the button is pressed. The press would be checked immediately after the ESP32-S3 is reset or powers up.
+
+If the button is pressed for more than 1 second but less than 2 seconds, the ESP32-S3 would enter a state where the provisioning information would be able to be re-entered.
+
+If the button is pressed for at least 2 seconds but less than 3 seconds, the ESP32-S3 would enter its OTA update state.
+
+If the button is pressed for more than 10 seconds, the ESP32-S3 should clear all provisioned information from NVS, delete all files from the SD card, and then halt. This is called a factory reset.
+
+If the button is not found to be pressed at power up or reset, the normal startup sequence would be followed.
+
+If at any time after the ESP32-S3 is running, the button is clicked 3 times within 3 seconds, the ESP32-S3 should enter a disabled state and no longer monitor the PIR or microphone nor upload files to the Google Drive until the button is once more clicked three times within 3 seconds after which normal monitoring would resume after a 20 minute waiting period. The ESP32-S3 should use the cellular modem to send a "monitoring disabled" SMS text message to the to the provisioned telephone number when monitoring is disabled. The ESP32-S3 should use the cellular modem to send an "monitoring enabled" SMS text message to the to the provisioned telephone number when monitoring is reenabled.
+
+The WS2812 RGB LED should be used to indicate the state of the ESP32-S3. Various colors and/or flashing patterns should be use to indicate: detected motion from the PIR sensor; a loud sound captured by the microphone; when writing a file to the SD card; when uploading files to the Google Drive; when all files have successfully been uploaded to the Google Drive; when in the OTA update state; when the OTA Update has succeeded; when the OTA Update has failed; when needing provisioning; when doing a factory reset; when the ESP32-S3 has not been successfully provisioned. These states should also be sent to the Serial monitor port of the ESP32-S3. When in disabled state, the WS2812 RGB LED would blink twice quickly in red once every minute. This would stop once normal monitoring resumes.
+
+If required, the LittleFS library should be used, not the SPIFFS library.
+
+The Preferences library should be used for all NVS access.
+
+For driving the WS2812 RGB LED, use the LiteLED library by Xylopyrographer from this URL: https://github.com/Xylopyrographer/LiteLED
+
+For driving the button, use the XP_Button library by Xylopyrographer from this URL: https://github.com/Xylopyrographer/XP_Button
+
+Can you help with that?

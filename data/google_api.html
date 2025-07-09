@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ESP32-S3 Monitoring Device Setup</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    h1, h2 {
+      color: #333;
+      margin-top: 20px;
+    }
+    h1 {
+      text-align: center;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    input[type="text"], input[type="tel"], input[type="number"] {
+      width: 100%;
+      padding: 8px;
+      box-sizing: border-box;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      width: 100%;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    .status {
+      margin-top: 20px;
+      padding: 10px;
+      border-radius: 4px;
+      display: none;
+    }
+    .success {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    .error {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    .instructions {
+      background-color: #e2f4fd;
+      padding: 10px;
+      border-radius: 4px;
+      margin-bottom: 15px;
+      font-size: 14px;
+    }
+    .tabs {
+      display: flex;
+      margin-bottom: 20px;
+      border-bottom: 1px solid #ddd;
+    }
+    .tab {
+      padding: 10px 15px;
+      cursor: pointer;
+      border: 1px solid transparent;
+      border-radius: 4px 4px 0 0;
+      margin-right: 5px;
+    }
+    .tab.active {
+      background-color: white;
+      border-color: #ddd;
+      border-bottom-color: white;
+      margin-bottom: -1px;
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>ESP32-S3 Monitoring Device Setup</h1>
+    
+    <div class="tabs">
+      <div class="tab active" onclick="showTab('googleDrive')">Google Drive</div>
+      <div class="tab" onclick="showTab('deviceSettings')">Device Settings</div>
+      <div class="tab" onclick="showTab('smsSettings')">SMS Settings</div>
+    </div>
+    
+    <div id="googleDrive" class="tab-content active">
+      <div class="instructions">
+        <p>To use Google Drive with this device, you need to provide OAuth credentials:</p>
+        <ol>
+          <li>Create a project in Google Cloud Console</li>
+          <li>Enable the Google Drive API</li>
+          <li>Create OAuth credentials (Web Application type)</li>
+          <li>Use OAuth Playground to get a refresh token</li>
+          <li>Create a folder in Google Drive and copy its ID from the URL</li>
+        </ol>
+      </div>
+      
+      <form id="googleDriveForm">
+        <div class="form-group">
+          <label for="client_id">Client ID:</label>
+          <input type="text" id="client_id" name="client_id" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="client_secret">Client Secret:</label>
+          <input type="text" id="client_secret" name="client_secret" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="refresh_token">Refresh Token:</label>
+          <input type="text" id="refresh_token" name="refresh_token" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="folder_id">Google Drive Folder ID:</label>
+          <input type="text" id="folder_id" name="folder_id" required>
+        </div>
+        
+        <button type="submit">Save Google Drive Settings</button>
+      </form>
+      
+      <div id="googleDriveStatus" class="status"></div>
+    </div>
+    
+    <div id="deviceSettings" class="tab-content">
+      <div class="instructions">
+        <p>Configure your device monitoring parameters:</p>
+      </div>
+      
+      <form id="deviceSettingsForm">
+        <div class="form-group">
+          <label for="light_threshold">Light Threshold (0-100):</label>
+          <input type="number" id="light_threshold" name="light_threshold" min="0" max="100" value="20" required>
+          <small>Threshold for IR LED and IR cut filter activation</small>
+        </div>
+        
+        <div class="form-group">
+          <label for="sound_threshold">Sound Level Threshold:</label>
+          <input type="number" id="sound_threshold" name="sound_threshold" min="10" value="3000" required>
+          <small>Threshold to trigger photo capture from sound</small>
+        </div>
+        
+        <div class="form-group">
+          <label for="base_filename">Base Filename (2-4 chars):</label>
+          <input type="text" id="base_filename" name="base_filename" minlength="2" maxlength="4" value="cap" required>
+          <small>Base name for saved photo files</small>
+        </div>
+        
+        <button type="submit">Save Device Settings</button>
+      </form>
+      
+      <div id="deviceSettingsStatus" class="status"></div>
+    </div>
+    
+    <div id="smsSettings" class="tab-content">
+      <div class="instructions">
+        <p>Configure SMS notification settings:</p>
+      </div>
+      
+      <form id="smsSettingsForm">
+        <div class="form-group">
+          <label for="phone_number">Phone Number (max 13 digits):</label>
+          <input type="tel" id="phone_number" name="phone_number" maxlength="13" required>
+          <small>Number to receive SMS notifications (including country code)</small>
+        </div>
+        
+        <div class="form-group">
+          <label for="activity_msg">Activity Detected Message:</label>
+          <input type="text" id="activity_msg" name="activity_msg" maxlength="80" value="Activity detected" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="no_activity_msg">No Activity Message:</label>
+          <input type="text" id="no_activity_msg" name="no_activity_msg" maxlength="80" value="No activity detected" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="no_comm_msg">No Google Drive Communication Message:</label>
+          <input type="text" id="no_comm_msg" name="no_comm_msg" maxlength="80" value="No communication to Google Drive" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="comm_ok_msg">Google Drive Communication OK Message:</label>
+          <input type="text" id="comm_ok_msg" name="comm_ok_msg" maxlength="80" value="Communication to Google Drive OK" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="disabled_msg">Monitoring Disabled Message:</label>
+          <input type="text" id="disabled_msg" name="disabled_msg" maxlength="80" value="Monitoring disabled" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="enabled_msg">Monitoring Enabled Message:</label>
+          <input type="text" id="enabled_msg" name="enabled_msg" maxlength="80" value="Monitoring enabled" required>
+        </div>
+        
+        <button type="submit">Save SMS Settings</button>
+      </form>
+      
+      <div id="smsSettingsStatus" class="status"></div>
+    </div>
+  </div>
+  
+  <script>
+    function showTab(tabId) {
+      // Hide all tabs
+      document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      
+      // Show the selected tab
+      document.getElementById(tabId).classList.add('active');
+      document.querySelector(`.tab[onclick="showTab('${tabId}')"]`).classList.add('active');
+    }
+    
+    function showStatus(elementId, message, isSuccess) {
+      const statusElement = document.getElementById(elementId);
+      statusElement.textContent = message;
+      statusElement.classList.remove('success', 'error');
+      statusElement.classList.add(isSuccess ? 'success' : 'error');
+      statusElement.style.display = 'block';
+      
+      // Hide after 5 seconds
+      setTimeout(() => {
+        statusElement.style.display = 'none';
+      }, 5000);
+    }
+    
+    // Google Drive form submission
+    document.getElementById('googleDriveForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const formData = new FormData(this);
+      
+      fetch('/setcredentials', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.text())
+      .then(data => {
+        showStatus('googleDriveStatus', data, data.includes('successfully'));
+      })
+      .catch(error => {
+        showStatus('googleDriveStatus', 'Error: ' + error, false);
+      });
+    });
+    
+    // Device Settings form submission
+    document.getElementById('deviceSettingsForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const formData = new FormData(this);
+      
+      fetch('/setsettings', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.text())
+      .then(data => {
+        showStatus('deviceSettingsStatus', data, data.includes('successfully'));
+      })
+      .catch(error => {
+        showStatus('deviceSettingsStatus', 'Error: ' + error, false);
+      });
+    });
+    
+    // SMS Settings form submission
+    document.getElementById('smsSettingsForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const formData = new FormData(this);
+      
+      fetch('/setsettings', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.text())
+      .then(data => {
+        showStatus('smsSettingsStatus', data, data.includes('successfully'));
+      })
+      .catch(error => {
+        showStatus('smsSettingsStatus', 'Error: ' + error, false);
+      });
+    });
+  </script>
+</body>
+</html>
